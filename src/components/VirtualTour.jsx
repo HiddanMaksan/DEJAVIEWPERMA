@@ -1,44 +1,32 @@
 import React from "react";
-import AIChatbot from "./AIChatbot";
+import AIChatbot from "./AIChatbot"; // Import the AIChatbot component
 
 export default function VirtualTour() {
-  const modelId = "y5R1rtv1vTf";
+  const modelId = "y5R1rtv1vTf"; // Matterport model ID
 
   return (
     <div
       style={{
         display: "flex",
-        flexDirection: "column", // Stack items vertically
-        alignItems: "flex-start",
+        flexDirection: "row", // Align items horizontally
+        alignItems: "center", // Center items vertically
+        justifyContent: "space-between", // Space between the two components
         padding: "30px",
-        backgroundColor: "#1a1a1a",
+        backgroundColor: "#0077b6", // Blue background
         height: "100vh",
         boxSizing: "border-box",
       }}
     >
-      {/* AI Chatbot (Takes More Space at the Top) */}
+      {/* Matterport 3D Showcase (Left Side, 70% Width) */}
       <div
         style={{
-          width: "57%", // Increased width
-          backgroundColor: "#2a2a2a",
-          borderRadius: "12px",
-          padding: "20px",
-          boxShadow: "0px 0px 20px rgba(255, 136, 0, 0.5)",
-          marginBottom: "20px", // Space before the 3D tour
-        }}
-      >
-        <AIChatbot />
-      </div>
-
-      {/* Matterport 3D Showcase (Pushed Down) */}
-      <div
-        style={{
-          width: "60%", // Matches chatbot width
-          height: "70vh", // Takes half of the screen
-          border: "4px solid #ff8800",
+          width: "70%", // Takes 70% of the screen width
+          height: "90vh", // Takes 90% of the screen height
+          border: "4px solid #023e8a", // Darker blue border
           borderRadius: "12px",
           overflow: "hidden",
-          boxShadow: "0px 0px 20px rgba(255, 136, 0, 0.5)",
+          boxShadow: "0px 0px 20px rgba(0, 119, 182, 0.5)", // Blue shadow
+          marginRight: "20px", // Add margin to separate from the chatbot
         }}
       >
         <iframe
@@ -47,6 +35,39 @@ export default function VirtualTour() {
           style={{ width: "100%", height: "100%", border: "none", borderRadius: "8px", display: "block" }}
           allowFullScreen
         ></iframe>
+      </div>
+
+      {/* AI Chatbot (Right Side, 30% Width) */}
+      <div
+        style={{
+          width: "30%", // Takes 30% of the screen width
+          backgroundColor: "#fff", // White background
+          borderRadius: "12px",
+          padding: "15px",
+          boxShadow: "0px 0px 20px rgba(0, 119, 182, 0.5)", // Blue shadow
+          height: "90vh", // Matches the height of the Matterport showcase
+          display: "flex",
+          flexDirection: "column", // Stack children vertically
+        }}
+      >
+        {/* Header with "DejaView" */}
+        <div
+          style={{
+            backgroundColor: "#023e8a", // Dark blue background
+            color: "#fff", // White text
+            padding: "15px",
+            borderRadius: "8px",
+            textAlign: "center",
+            fontSize: "20px",
+            fontWeight: "bold",
+            marginBottom: "20px", // Space between header and chatbot
+          }}
+        >
+          DejaView
+        </div>
+
+        {/* Chatbot Component */}
+        <AIChatbot />
       </div>
     </div>
   );

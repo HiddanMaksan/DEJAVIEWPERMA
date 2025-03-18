@@ -1,72 +1,152 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 export default function AIChatbot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-
-  const API_KEY = "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"; // Replace with your actual API key
-  const API_URL = "https://api.openai.com/v1/chat/completions";
+  const [isLoading, setIsLoading] = useState(false);
+  const API_KEY = "sk-7706e4e5201642beaaa10ddfc1d86291"; // Replace with your DeepSeek API key
+  const API_URL = "https://api.deepseek.com/chat/completions";
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage = { role: "user", content: input };
-    setMessages([...messages, userMessage]);
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        API_URL,
-        {
-          model: "gpt-4",
-          messages: [...messages, userMessage],
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            "Authorization": `Bearer ${API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [...messages, userMessage],
+        }),
+      });
 
-      const botMessage = response.data.choices[0].message;
-      setMessages([...messages, userMessage, botMessage]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botMessage = data.choices[0].message;
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
       console.error("Error fetching response:", error);
+      const errorMessage = {
+        role: "system",
+        content: "Sorry, something went wrong. Please try again.",
+      };
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
-
-    setInput("");
   };
 
   return (
-    <div style={{
-      position: "fixed",
-      bottom: "50px",
-      right: "20px",
-      width: "450px",
-      backgroundColor: "#222",
-      borderRadius: "10px",
-      padding: "10px",
-      boxShadow: "0px 0px 10px rgba(255, 136, 0, 0.5)"
-    }}>
-      <h3 style={{ color: "#ff8800" }}>Ask About This Property</h3>
-      <div style={{ maxHeight: "200px", overflowY: "auto", padding: "5px", backgroundColor: "#333", borderRadius: "5px", color: "#fff" }}>
+    <div
+      style={{
+        position: "fixed", // Fix the chatbot to the screen
+        top: "110px", // Adjust the top position as needed
+        right: "40px", // Move the chatbot to the right
+        width: "27%", // Adjust the width of the entire chatbot here
+        maxWidth: "400px", // Set a max-width for better usability
+        height: "80%", // Make the chatbot take full height (minus padding)
+        padding: "10px",
+        backgroundColor: "#f5f5f5",
+        borderRadius: "8px",
+        boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+        zIndex: 1000, // Ensure it stays on top of other elements
+        display: "flex",
+        flexDirection: "column", // Stack children vertically
+      }}
+    >
+      {/* Chat Messages */}
+      <div
+        style={{
+          flex: 1, // Expand to fill remaining space
+          overflowY: "auto", // Enable scrolling for messages
+          marginBottom: "10px",
+          padding: "15px",
+          backgroundColor: "#fff",
+          borderRadius: "10px",
+          border: "1px solid #ddd",
+        }}
+      >
         {messages.map((msg, index) => (
-          <p key={index} style={{ textAlign: msg.role === "user" ? "right" : "left", color: msg.role === "user" ? "#ff8800" : "#fff" }}>
-            {msg.content}
-          </p>
+          <div
+            key={index}
+            style={{
+              textAlign: msg.role === "user" ? "right" : "left",
+              marginBottom: "10px",
+            }}
+          >
+            <div
+              style={{
+                display: "inline-block",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                backgroundColor: msg.role === "user" ? "#007bff" : "#28a745",
+                color: "#fff",
+              }}
+            >
+              {msg.content}
+            </div>
+          </div>
         ))}
+        {isLoading && (
+          <div style={{ textAlign: "left" }}>
+            <div
+              style={{
+                display: "inline-block",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                backgroundColor: "#6c757d",
+                color: "#fff",
+              }}
+            >
+              Thinking...
+            </div>
+          </div>
+        )}
       </div>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Ask a question..."
-        style={{ width: "100%", padding: "5px", marginTop: "10px", borderRadius: "5px", border: "1px solid #ff8800", backgroundColor: "#333", color: "#fff" }}
-      />
-      <button onClick={sendMessage} style={{ width: "100%", marginTop: "5px", padding: "5px", backgroundColor: "#ff8800", color: "#1a1a1a", borderRadius: "5px", cursor: "pointer" }}>
-        Send
-      </button>
+
+      {/* Input and Send Button */}
+      <div style={{ display: "flex", gap: "10px" }}>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type a message..."
+          disabled={isLoading}
+          style={{
+            flex: 1,
+            padding: "10px",
+            borderRadius: "5px",
+            border: "1px solid #ddd",
+          }}
+          onKeyPress={(e) => e.key === "Enter" && sendMessage()} // Send message on Enter key
+        />
+        <button
+          onClick={sendMessage}
+          disabled={isLoading}
+          style={{
+            width:"30%", 
+            padding: "10px 20px",
+            backgroundColor: "#007bff",
+            color: "#fff",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Send
+        </button>
+      </div>
     </div>
   );
 }
