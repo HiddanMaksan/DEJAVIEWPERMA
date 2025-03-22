@@ -1,17 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function AIChatbot() {
+export default function AIChatbot({ leadData }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const API_KEY = "sk-7706e4e5201642beaaa10ddfc1d86291"; // Replace with your DeepSeek API key
   const API_URL = "https://api.deepseek.com/chat/completions";
 
+  // Add lead data as initial context for the chatbot
+  useEffect(() => {
+    if (leadData) {
+      const initialMessage = {
+        role: "system",
+        content: `You are a helpful assistant. The user has provided the following details: 
+        - Name: ${leadData.name}
+        - Email: ${leadData.email}
+        - Looking for: ${leadData.lookingFor}
+        - Property type: ${leadData.propertyType}
+        - Budget: ${leadData.budget}
+        - Size preference: ${leadData.sizePreference}
+        - State: ${leadData.state}
+        - District: ${leadData.district}.
+        Use this information to provide personalized responses.`,
+      };
+      setMessages([initialMessage]);
+    }
+  }, [leadData]);
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = { role: "user", content: input };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    const updatedMessages = [...messages, userMessage]; // Include the latest system message
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
@@ -24,7 +45,7 @@ export default function AIChatbot() {
         },
         body: JSON.stringify({
           model: "deepseek-chat",
-          messages: [...messages, userMessage],
+          messages: updatedMessages, // Use the updated messages array
         }),
       });
 
@@ -50,26 +71,26 @@ export default function AIChatbot() {
   return (
     <div
       style={{
-        position: "fixed", // Fix the chatbot to the screen
-        top: "110px", // Adjust the top position as needed
-        right: "40px", // Move the chatbot to the right
-        width: "27%", // Adjust the width of the entire chatbot here
-        maxWidth: "400px", // Set a max-width for better usability
-        height: "80%", // Make the chatbot take full height (minus padding)
+        position: "fixed",
+        top: "110px",
+        right: "40px",
+        width: "27%",
+        maxWidth: "400px",
+        height: "80%",
         padding: "10px",
         backgroundColor: "#f5f5f5",
         borderRadius: "8px",
         boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
-        zIndex: 1000, // Ensure it stays on top of other elements
+        zIndex: 1000,
         display: "flex",
-        flexDirection: "column", // Stack children vertically
+        flexDirection: "column",
       }}
     >
       {/* Chat Messages */}
       <div
         style={{
-          flex: 1, // Expand to fill remaining space
-          overflowY: "auto", // Enable scrolling for messages
+          flex: 1,
+          overflowY: "auto",
           marginBottom: "10px",
           padding: "15px",
           backgroundColor: "#fff",
@@ -77,27 +98,29 @@ export default function AIChatbot() {
           border: "1px solid #ddd",
         }}
       >
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            style={{
-              textAlign: msg.role === "user" ? "right" : "left",
-              marginBottom: "10px",
-            }}
-          >
+        {messages
+          .filter((msg) => msg.role !== "system") // Hide system messages from the UI
+          .map((msg, index) => (
             <div
+              key={index}
               style={{
-                display: "inline-block",
-                padding: "8px 12px",
-                borderRadius: "10px",
-                backgroundColor: msg.role === "user" ? "#007bff" : "#28a745",
-                color: "#fff",
+                textAlign: msg.role === "user" ? "right" : "left",
+                marginBottom: "10px",
               }}
             >
-              {msg.content}
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "8px 12px",
+                  borderRadius: "10px",
+                  backgroundColor: msg.role === "user" ? "#007bff" : "#28a745",
+                  color: "#fff",
+                }}
+              >
+                {msg.content}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
         {isLoading && (
           <div style={{ textAlign: "left" }}>
             <div
@@ -129,13 +152,13 @@ export default function AIChatbot() {
             borderRadius: "5px",
             border: "1px solid #ddd",
           }}
-          onKeyPress={(e) => e.key === "Enter" && sendMessage()} // Send message on Enter key
+          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
         />
         <button
           onClick={sendMessage}
           disabled={isLoading}
           style={{
-            width:"30%", 
+            width: "30%",
             padding: "10px 20px",
             backgroundColor: "#007bff",
             color: "#fff",

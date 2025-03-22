@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
 
-export default function LeadForm() {
+export default function LeadForm({ onSubmit }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [lookingFor, setLookingFor] = useState("");
@@ -11,31 +11,63 @@ export default function LeadForm() {
   const [budget, setBudget] = useState("");
   const [sizePreference, setSizePreference] = useState("");
   const [state, setState] = useState("");
+  const [district, setDistrict] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Mapping of states to districts
+  const stateDistricts = {
+    selangor: ["Petaling", "Klang", "Shah Alam", "Subang Jaya", "Kajang"],
+    penang: ["George Town", "Butterworth", "Bayan Lepas", "Nibong Tebal"],
+    kedah: ["Alor Setar", "Sungai Petani", "Kulim", "Langkawi"],
+    perlis: ["Kangar", "Arau"],
+    terengganu: ["Kuala Terengganu", "Dungun", "Kemaman"],
+    kelantan: ["Kota Bharu", "Pasir Mas", "Tumpat"],
+    pahang: ["Kuantan", "Temerloh", "Bentong"],
+    melaka: ["Melaka Tengah", "Alor Gajah", "Jasin"],
+    negeriSembilan: ["Seremban", "Port Dickson", "Nilai"],
+    johor: ["Johor Bahru", "Pasir Gudang", "Muar", "Batu Pahat"],
+    sabah: ["Kota Kinabalu", "Sandakan", "Tawau"],
+    sarawak: ["Kuching", "Miri", "Sibu"],
+    wilayahPersekutuan: ["Kuala Lumpur", "Putrajaya"],
+    labuan: ["Labuan"],
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    if (!name || !email || !lookingFor || !propertyType || !budget || !sizePreference || !state) {
+    if (!name || !email || !lookingFor || !propertyType || !budget || !sizePreference || !state || !district) {
       setError("Please fill in all fields.");
       return;
     }
 
+    const leadData = {
+      name,
+      email,
+      lookingFor,
+      propertyType,
+      budget,
+      sizePreference,
+      state,
+      district,
+    };
+
     try {
+      // Save lead data to Firestore
       await addDoc(collection(db, "leads"), {
-        name,
-        email,
-        lookingFor,
-        propertyType,
-        budget,
-        sizePreference,
-        state,
+        ...leadData,
         timestamp: new Date(),
       });
 
-      console.log("Lead Captured:", { name, email, lookingFor, propertyType, budget, sizePreference, state });
+      console.log("Lead Captured:", leadData);
+
+      // Pass lead data to the parent component (or directly to the chatbot)
+      if (onSubmit) {
+        onSubmit(leadData);
+      }
+
+      // Navigate to the virtual tour page
       navigate("/virtual-tour");
     } catch (error) {
       console.error("Error saving lead:", error);
@@ -143,8 +175,22 @@ export default function LeadForm() {
 
         <select value={state} onChange={(e) => setState(e.target.value)} required style={inputStyle}>
           <option value="">Select State</option>
-          {["Selangor", "Penang", "Kedah", "Perlis", "Terengganu", "Kelantan", "Pahang", "Melaka", "Negeri Sembilan", "Johor", "Sabah", "Sarawak", "Wilayah Persekutuan", "Labuan"].map((s) => (
-            <option key={s} value={s.toLowerCase()}>{s}</option>
+          {Object.keys(stateDistricts).map((s) => (
+            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          ))}
+        </select>
+
+        {/* District Dropdown */}
+        <select
+          value={district}
+          onChange={(e) => setDistrict(e.target.value)}
+          required
+          style={inputStyle}
+          disabled={!state} // Disable if no state is selected
+        >
+          <option value="">Select District</option>
+          {stateDistricts[state]?.map((d) => (
+            <option key={d} value={d}>{d}</option>
           ))}
         </select>
 
